@@ -9,10 +9,14 @@ public class Item_Hold : MonoBehaviour
     public float detectionAngle;
     public Transform itemTransform;
     public static Transform activeTransform;
+    public static Transform passiveTransform;
+    public static Transform fillerTransform;
+    public GameObject activeObject;
     public Transform camTransform;
     public static bool itemPickedUPBool;
-    public static GameObject inventorySlot1Object;
-    public static GameObject inventorySlot2Object;
+    public static bool itemPickedUPCapBool;
+
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -23,30 +27,34 @@ public class Item_Hold : MonoBehaviour
         Looking_And_Close = GetComponent<Looking_and_Close>();
         itemTransform = gameObject.transform;
 
-        inventorySlot2Object = null;
     }
 
     // Update is called once per frame
     void Update()
     {
-
-        if (itemPickedUPBool == false) 
+        if (itemPickedUPCapBool == false)
         {
             Interact();
         }
-        else
+        HoldItem(activeTransform);
+        HoldItem(passiveTransform);
+        passiveTransform.gameObject.SetActive(false);
+        activeTransform.gameObject.SetActive(true);
+
+        if (itemPickedUPBool == true && itemPickedUPCapBool == false && Input.GetKeyDown("q"))
         {
-            HoldItem(activeTransform);
+            DroplastItem();
         }
-        if (itemPickedUPBool == true && Input.GetKey("q")) 
+        if (itemPickedUPBool == true && Input.GetKeyDown("q")) 
         {
-            DropItem();
+            Drop1of2Items();
         }
-        if (itemPickedUPBool == true && Input.GetKeyDown("f")) 
+        
+        if (Input.GetKeyDown("f")) 
         {
             SwapItem();
         }
-        
+        //HoldItem(inventorySlot1Object.transform);
         // pickup and enabling item hold or inventory
 
         // check if item in inventory/not in hand
@@ -69,12 +77,23 @@ public class Item_Hold : MonoBehaviour
     {
         if (Looking_And_Close.IsInRadius(itemRadius) && Looking_And_Close.IsLooking(itemTransform, detectionAngle))
         {
-            if (Input.GetKey("e"))
+            if (Input.GetKey("e") && itemPickedUPBool == false)
             {
+                passiveTransform = activeTransform;
+                activeTransform = itemTransform;
+                print("Im Close Looking and Interacting with " + itemTransform + " transform");
+                itemPickedUPBool = true;
+                Pickup(activeTransform);
+                
+
+            }
+            else if (Input.GetKey("e") && itemPickedUPBool == true) 
+            {
+                passiveTransform = activeTransform;
                 activeTransform = itemTransform;
                 print("Im Close Looking and Interacting with " + itemTransform + " transform");
                 Pickup(activeTransform);
-                
+                itemPickedUPCapBool = true;
 
             }
         }
@@ -91,25 +110,54 @@ public class Item_Hold : MonoBehaviour
     }
     void SwapItem() 
     {
-        activeTransform.gameObject.SetActive(false);
-        if (inventorySlot2Object == null)
-        {
-            print("null");
-            inventorySlot2Object = activeTransform.gameObject;
-            activeTransform = null;
-        }
-        else if (inventorySlot2Object != null) 
-        {
+        fillerTransform = activeTransform;
+        activeTransform = passiveTransform;
+        passiveTransform = fillerTransform;
+        // check if have item in main hand
+        // check if have item in 2nd slot
+        // swap main hand item with 2nd slot
 
-            print("not null");
-            inventorySlot1Object = activeTransform.gameObject;
-            activeTransform = inventorySlot2Object.transform;
-            inventorySlot2Object = inventorySlot1Object;
-        }
-        activeTransform.gameObject.SetActive(true);
+
+        //if (itemIn1stSlotBool == true)
+        //{
+        //    print("swap main with 2nd");
+        //    inventorySlot1Object = activeTransform.gameObject;
+        //    //Slot 1 becomes item
+        //    activeObject = inventorySlot2Object;
+        //    inventorySlot2Object = inventorySlot1Object;
+        //    // Slot2 item = Slot1 item
+        //    inventorySlot1Object = activeObject;
+        //    //Swap done
+        //    inventorySlot2Object.SetActive(false);
+        //    inventorySlot1Object.SetActive(true);
+        //    itemPickedUPBool = false;
+        //}
+        //else 
+        //{
+        //    //no swap
+        //}
+
     }
-    void DropItem() 
+    void Drop1of2Items() 
     {
+        
+        if (itemPickedUPCapBool == true && itemPickedUPBool == true) 
+        {
+            //2 items
+            print(passiveTransform);
+            activeTransform = null;
+            activeTransform = passiveTransform;
+
+            itemPickedUPCapBool = false;
+
+        }
+        
+
+    }
+    void DroplastItem()
+    {
+        // 1 item
+        print("1 items");
         activeTransform = null;
         itemPickedUPBool = false;
     }

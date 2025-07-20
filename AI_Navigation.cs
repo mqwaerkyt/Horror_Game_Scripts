@@ -77,7 +77,7 @@ public class AI_Navigation : MonoBehaviour
     {
         if (Physics.CheckSphere(transform.position, radius, layerMaskPlayer) == true)
         {
-            Debug.Log("player in " + radius + "m");
+            //Debug.Log("player in " + radius + "m");
             return (true);
         }
         return (false);
