@@ -21,6 +21,7 @@ public class Movement_Player : MonoBehaviour
     public float walkSpeed;
     public float stamina;
     public float detectionAngle;
+    public float SprintWaitTimer;
 
     void Start()
     {
@@ -45,7 +46,13 @@ public class Movement_Player : MonoBehaviour
         transform_body.localEulerAngles = new Vector3(0,camera_angles.y, 0);
 
         // speeds
-        if (Input.GetKey("left shift") == true && stamina >=0)
+        SprintWaitTimer -= Time.deltaTime;
+        if (SprintWaitTimer <= 0) 
+        {
+            SprintWaitTimer = 0;
+        }
+
+        if (Input.GetKey("left shift") == true && stamina >=0 && SprintWaitTimer == 0)
         {
             playerSpeed = runSpeed;
             stamina -= 1f * Time.deltaTime;
@@ -63,6 +70,12 @@ public class Movement_Player : MonoBehaviour
         if (stamina >= 5) 
         {
             stamina = 5;
+        }
+        if (stamina <= 0) 
+        {
+            SprintWaitTimer = 1;
+
+            stamina = 0;
         }
 
         // body movement

@@ -7,6 +7,7 @@ public class AI_Navigation : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
 
     public NavMeshAgent NMA_monster;
+    public GameObject playerGameObject;
     public Transform playerTransform;
     public NavMeshPath path;
     public LayerMask layerMaskPlayer;
@@ -16,11 +17,27 @@ public class AI_Navigation : MonoBehaviour
     public float fastChaseRadius;
     public float caughtRadius;
     public float chaseMode;
-    Movement_Player playerMovmentScript;
+    public Movement_Player playerMovementScript;
     Looking_and_Close looking_And_Close;
     public float detectionAngle;
     public float agroMeter;
     Torch_Use torch_Use;
+    public float modeTimer;
+    public float startTimer;
+    public float flashedCounter;
+    public float Tasktimer;
+    public bool isDoingTask;
+    public float hiddenTime;
+    public float stalkingTime;
+    public float chaseTime;
+    public float fastChaseTime;
+    public float caughtTime;
+    public bool hasreset;
+    public float flashTime;
+    public float flashTimer;
+    public bool hasResetFlash;
+
+
 
     void Start()
     {
@@ -30,9 +47,12 @@ public class AI_Navigation : MonoBehaviour
         chaseRadius = 15;
         fastChaseRadius = 5;
         caughtRadius = 3;
+        flashTime = 10;
 
-        playerMovmentScript = GetComponent<Movement_Player>();
-}
+        looking_And_Close = GetComponent<Looking_and_Close>();
+        playerMovementScript = playerGameObject.GetComponent<Movement_Player>();
+    }
+
 
     // Update is called once per frame
     void Update()
@@ -72,6 +92,139 @@ public class AI_Navigation : MonoBehaviour
 
         //print(chaseMode);
 
+        CalcAgroMeter();
+
+        switch (chaseMode) 
+        {
+            case 5:
+                TooFar();
+                break;
+            case 4:
+                Hidden();
+                break;
+            case 3:
+                Stalk();
+                break;
+            case 2:
+                Chase();
+                break;
+            case 1:
+                FastChase();
+                break;
+            case 0:
+                Caught();
+                break;
+
+        }
+
+    }
+
+    void CalcAgroMeter() 
+    {
+        // hidden agro progression
+        if (chaseMode == 4 && (playerMovementScript.stamina <= 1 || isDoingTask == true || ModeTimer(4, 15, true)) )
+        {
+            agroMeter = 1;
+            print(agroMeter +"im agro");
+        }
+
+        // stalk agro mode progression
+        //if player is looking at monster or monster not agro enough stop
+        if (chaseMode == 3 && (ModeTimer(6,flashTime,true) || Tasktimer >= 10 || ModeTimer(3,15,true)))
+        {
+            agroMeter = 2;
+            print(agroMeter + "im agrooo");
+        }
+        
+        // if player uses flashlight while looking at monster, reduce agro
+        if (looking_And_Close.IsLooking(transform, detectionAngle) == true && torch_Use.torchOn == true)
+        {
+            agroMeter -= 1;
+        }
+
+
+        if (chaseMode == 5) 
+        {
+            agroMeter = 0;
+        }
+       
+    }
+
+    bool ModeTimer(float chasMode, float targetTime,bool startFromZero) 
+    {
+        if (chaseMode <= 3)
+        {
+            hiddenTime = 0;
+        }
+        if (chaseMode != 3)
+        {
+            stalkingTime = 0;
+        }
+        if (chaseMode != 3)
+        {
+            flashTimer = 0;
+        }
+
+        switch (chasMode) 
+        {
+            case 7:
+                // tasktimer
+                break;
+            case 6:
+                //flashtimer
+                flashTimer += Time.deltaTime;
+                if (startFromZero == true && hasResetFlash == false)
+                {
+                    flashTimer = 0;
+                    hasResetFlash = true;
+
+                }
+                if (flashTimer >= targetTime)
+                {
+                    hasResetFlash = false;
+                    return (true);
+                }
+                break;
+            case 5:
+                break;
+            case 4:
+                hiddenTime += Time.deltaTime;
+                if (startFromZero == true && hasreset == false) 
+                {
+                    hiddenTime = 0;
+                    hasreset = true;
+                    
+                }
+                if (hiddenTime >= targetTime)
+                {
+                    hasreset = false;
+                    return (true); 
+                }
+                break;
+            case 3:  
+                stalkingTime += Time.deltaTime;
+                if (startFromZero == true && hasreset == false)
+                {
+                    stalkingTime = 0;
+                    hasreset = true;
+
+                }
+                if (stalkingTime >= targetTime)
+                {
+                    hasreset = false;
+                    return (true);
+                }
+                break;
+            case 2:
+                break;
+            case 1:
+                break;
+            case 0:
+                break;
+            
+        }
+
+        return (false);
     }
      bool CheckSphereMonster(float radius)
     {
@@ -87,49 +240,55 @@ public class AI_Navigation : MonoBehaviour
     {
         
     }
-    void ToorFar()
+    void TooFar()
     {
+
         //chasemode = 5
         // go to next stage
+        print("im far");
         NMA_monster.isStopped = false;
 
     }
     void Hidden()
     {
         //chasemode = 4
-        NMA_monster.isStopped = true;
-
-        // if player is out of stamina or after some time go to next stage
-        if (playerMovmentScript.stamina <= 1 || agroMeter == 1) 
+        if (agroMeter == 1)
         {
             NMA_monster.isStopped = false;
+            print("im coming");
         }
+        else
+        {
+            NMA_monster.isStopped = true;
+
+            print("im hidden");
+        }
+        // if player is out of stamina or after some time go to next stage
+
 
     }
     void Stalk()
     {
         //chasemode = 3
-        //if player is looking at monster or monster not agro enough stop
-        if (looking_And_Close.IsLooking(transform, detectionAngle) == true || agroMeter < 2)
-        {
-            NMA_monster.isStopped = true;
-        }
-        else 
+        if (agroMeter == 2)
         {
             NMA_monster.isStopped = false;
+            print("im coming");
         }
-        // if player uses flashlight while looking at monster, reduce agro
-        if (looking_And_Close.IsLooking(transform, detectionAngle) == true && torch_Use.torchOn == true)
+        else
         {
-            agroMeter -= 1;
+            NMA_monster.isStopped = true;
+
+            print("im stalking");
         }
-        
+
     }
     void Chase() 
     {
         //chasemode = 2
         NMA_monster.isStopped = false;
         NMA_monster.speed = 3;
+        print("im chasing");
     }
 
     void FastChase()
@@ -137,12 +296,14 @@ public class AI_Navigation : MonoBehaviour
         //chasemode = 1
         NMA_monster.isStopped = false;
         NMA_monster.speed = 6;
+        print("run");
 
     }
 
     void Caught() 
     {
         //chasemode = 0
+        print("caught");
 
     }
 }

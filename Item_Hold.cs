@@ -36,10 +36,18 @@ public class Item_Hold : MonoBehaviour
         {
             Interact();
         }
-        HoldItem(activeTransform);
-        HoldItem(passiveTransform);
-        passiveTransform.gameObject.SetActive(false);
-        activeTransform.gameObject.SetActive(true);
+        if (activeTransform != null) 
+        {
+            HoldItem(activeTransform);
+
+            activeTransform.gameObject.SetActive(true);
+        }
+        if (passiveTransform != null)
+        {
+            HoldItem(passiveTransform);
+
+            passiveTransform.gameObject.SetActive(false);
+        }
 
         if (itemPickedUPBool == true && itemPickedUPCapBool == false && Input.GetKeyDown("q"))
         {
